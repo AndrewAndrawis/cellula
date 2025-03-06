@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Satellite Image Segmentation</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            display: none;
+        }
+        #resultImage {
+            max-width: 100%;
+            margin-top: 15px;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Satellite Image Segmentation</h1>
+    <div class="container">
+        <div class="form-group">
+            <label for="imageUpload">Upload a TIF satellite image:</label>
+            <input type="file" id="imageUpload" accept=".tif,.tiff">
+        </div>
+        <button class="btn" onclick="uploadImage()">Process Image</button>
+        
+        <div class="loader" id="loader"></div>
+        
+        <div id="result">
+            <h3>Segmentation Result:</h3>
+            <p id="resultMessage"></p>
+            <img id="resultImage" src="" alt="Segmentation Result">
+        </div>
+    </div>
+
+    <script>
+        function uploadImage() {
+            const fileInput = document.getElementById('imageUpload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file to upload');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+                
+                if (data.success) {
+                    document.getElementById('resultMessage').textContent = data.message;
+                    document.getElementById('resultImage').src = 'data:image/png;base64,' + data.visualization;
+                } else {
+                    document.getElementById('resultMessage').textContent = data.error || 'An error occurred during processing';
+                }
+            })
+            .catch(error => {
+                document.getElementById('loader').style.display = 'none';
+                alert('Error: ' + error);
+            });
+        }
+    </script>
+</body>
+</html>
